@@ -1,149 +1,163 @@
-import React, { useState } from 'react';
-import { View,Text,StyleSheet,useColorScheme,TouchableOpacity,ScrollView,
+import React, { useState, useRef } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Dimensions, FlatList, Animated,
 } from 'react-native';
 
+// ── RESPONSIVE ───────────────────────────────────────────────
+const { width: SW, height: SH } = Dimensions.get('window');
+const rs  = (n) => Math.round(n * (SW / 390));
+const rvs = (n) => Math.round(n * (SH / 844));
+
+// ── PINK THEME ───────────────────────────────────────────────
+const P = {
+  bg:      '#fdf2f8',
+  card:    '#ffffff',
+  pink100: '#fce7f3',
+  pink200: '#fbcfe8',
+  pink300: '#f9a8d4',
+  pink400: '#f472b6',
+  pink500: '#ec4899',
+  pink600: '#db2777',
+  pink700: '#be185d',
+  pink800: '#9d174d',
+  txt:     '#1a0a10',
+  sub:     '#7d4d60',
+  muted:   '#c084b0',
+};
+
+// ── DATA ─────────────────────────────────────────────────────
 const questions = [
   {
-    id: 1,
-    text: "When working on a project, what excites you most?",
+    id: 1, emoji: '🎨',
+    text: "What do you love doing the most?",
     options: [
-      { text: "Creating beautiful visuals, designs, or art", score: { design: 3, media: 2 } },
-      { text: "Telling stories, communicating ideas, or working with media", score: { media: 3, design: 1 } },
-      { text: "Building, planning structures, or solving spatial/technical problems", score: { architecture: 3 } },
-      { text: "Managing people, money, strategies, or starting ventures", score: { business: 3 } },
-      { text: "Helping people enjoy experiences, travel, events, or hospitality", score: { tourism: 3 } },
-      { text: "Coding, technology, apps, software, or digital systems", score: { ict: 3 } },
+      { text: "Drawing & making art",             emoji: '✏️', score: { design: 3, media: 2 } },
+      { text: "Telling stories & acting",          emoji: '🎭', score: { media: 3, design: 1 } },
+      { text: "Building & measuring things",       emoji: '🏗️', score: { architecture: 3 } },
+      { text: "Being the team leader",             emoji: '👑', score: { business: 3 } },
+      { text: "Planning trips & fun events",       emoji: '✈️', score: { tourism: 3 } },
+      { text: "Playing with computers & gadgets", emoji: '💻', score: { ict: 3 } },
     ],
   },
   {
-    id: 2,
-    text: "How do you prefer to spend your free time creatively?",
+    id: 2, emoji: '📚',
+    text: "What was your favourite subject at school?",
     options: [
-      { text: "Drawing, designing clothes/graphics, photography", score: { design: 3 } },
-      { text: "Making videos, podcasts, writing stories, social media content", score: { media: 3 } },
-      { text: "Sketching buildings, models, or planning spaces", score: { architecture: 2 } },
-      { text: "Organizing events, selling ideas, leading groups", score: { business: 2, tourism: 2 } },
-      { text: "Planning trips, hosting friends, creating experiences", score: { tourism: 3 } },
-      { text: "Building apps/websites, gaming, experimenting with tech", score: { ict: 3 } },
+      { text: "Art & Design",               emoji: '🎨', score: { design: 3 } },
+      { text: "English & Drama",            emoji: '📖', score: { media: 3 } },
+      { text: "Maths & Technical Drawing",  emoji: '📐', score: { architecture: 3 } },
+      { text: "Business Studies",           emoji: '💼', score: { business: 3 } },
+      { text: "Geography & Home Economics", emoji: '🌍', score: { tourism: 3 } },
+      { text: "Computer Studies",           emoji: '🖥️', score: { ict: 3 } },
     ],
   },
   {
-    id: 3,
-    text: "Which subject/activity did you enjoy most in school?",
+    id: 3, emoji: '👫',
+    text: "In a team, what do YOU do best?",
     options: [
-      { text: "Art, Design & Technology, Fashion/Needlework", score: { design: 3 } },
-      { text: "English, Drama, Literature, Public Speaking", score: { media: 3 } },
-      { text: "Mathematics, Technical Drawing, Woodwork", score: { architecture: 3 } },
-      { text: "Commerce, Business Studies, Accounting", score: { business: 3 } },
-      { text: "Geography, Home Economics, Hospitality/Catering", score: { tourism: 3 } },
-      { text: "Computer Studies, Maths, Science", score: { ict: 3 } },
+      { text: "Make it look beautiful",        emoji: '🌸', score: { design: 2, media: 1 } },
+      { text: "Talk and explain ideas",         emoji: '🗣️', score: { media: 3 } },
+      { text: "Plan and organise everything",   emoji: '📋', score: { architecture: 3 } },
+      { text: "Lead the group",                 emoji: '⭐', score: { business: 3 } },
+      { text: "Make everyone happy & welcome",  emoji: '😊', score: { tourism: 3 } },
+      { text: "Fix the tech problems",          emoji: '🔧', score: { ict: 3 } },
     ],
   },
   {
-    id: 4,
-    text: "In a group project, what role do you naturally take?",
+    id: 4, emoji: '🏢',
+    text: "Where would you love to work one day?",
     options: [
-      { text: "The visual designer or creative concept developer", score: { design: 2, media: 1 } },
-      { text: "The presenter, communicator, or content creator", score: { media: 3 } },
-      { text: "The planner or technical/structural expert", score: { architecture: 3 } },
-      { text: "The organizer, leader, or strategist", score: { business: 3 } },
-      { text: "The host, experience designer, or people coordinator", score: { tourism: 3 } },
-      { text: "The coder, problem-solver, or tech fixer", score: { ict: 3 } },
+      { text: "A cool design studio",       emoji: '🖌️', score: { design: 3 } },
+      { text: "A TV or radio station",       emoji: '📺', score: { media: 3 } },
+      { text: "An architecture office",      emoji: '📏', score: { architecture: 3 } },
+      { text: "A big company office",        emoji: '🏦', score: { business: 3 } },
+      { text: "A hotel or travel agency",    emoji: '🏨', score: { tourism: 3 } },
+      { text: "A tech company like Google",  emoji: '🔬', score: { ict: 3 } },
     ],
   },
   {
-    id: 5,
-    text: "What kind of work environment appeals to you most?",
+    id: 5, emoji: '🤝',
+    text: "Do you prefer people or technology?",
     options: [
-      { text: "Studio with art supplies, mannequins, computers for design", score: { design: 3 } },
-      { text: "Media lab, cameras, editing suites, microphones", score: { media: 3 } },
-      { text: "Workshop with models, drawing boards, measuring tools", score: { architecture: 3 } },
-      { text: "Office with meetings, strategies, client presentations", score: { business: 3 } },
-      { text: "Hotels, events venues, travel planning spaces", score: { tourism: 3 } },
-      { text: "Tech lab, computers, servers, coding environment", score: { ict: 3 } },
+      { text: "I love being around people!",             emoji: '👥', score: { tourism: 2, business: 2, media: 1 } },
+      { text: "I prefer working with tools & computers", emoji: '🔩', score: { design: 2, ict: 2, architecture: 1 } },
+      { text: "Both are great for me!",                  emoji: '🤩', score: { media: 2, business: 1 } },
     ],
   },
   {
-    id: 6,
-    text: "How important is working with people vs technology/tools?",
+    id: 6, emoji: '🌟',
+    text: "What dream sounds most exciting to you?",
     options: [
-      { text: "I love working closely with people and teams", score: { tourism: 2, business: 2, media: 1 } },
-      { text: "I prefer focusing on tools, software, or individual creative work", score: { design: 2, ict: 2, architecture: 1 } },
-      { text: "A balanced mix of both", score: { media: 2, business: 1 } },
-    ],
-  },
-  {
-    id: 7,
-    text: "Which future excites you more?",
-    options: [
-      { text: "Seeing my designs, fashion, or ads in the world", score: { design: 3 } },
-      { text: "Creating content that reaches/influences many people", score: { media: 3 } },
-      { text: "Designing buildings or spaces people live/work in", score: { architecture: 3 } },
-      { text: "Running a business, managing teams, or growing brands", score: { business: 3 } },
-      { text: "Creating memorable experiences for travelers/guests", score: { tourism: 3 } },
-      { text: "Building apps, software, or digital innovations", score: { ict: 3 } },
-    ],
-  },
-  {
-    id: 8,
-    text: "How do you feel about portfolios or presentations?",
-    options: [
-      { text: "I love creating and showing visual work (portfolio essential)", score: { design: 3, media: 2 } },
-      { text: "I enjoy presenting ideas or speaking to groups", score: { media: 2, business: 1, tourism: 1 } },
-      { text: "I prefer technical drawings/plans over artistic portfolios", score: { architecture: 2 } },
-      { text: "I'm more comfortable with numbers/strategies than visuals", score: { business: 2, ict: 1 } },
+      { text: "My designs seen all over the world", emoji: '🌍', score: { design: 3 } },
+      { text: "Millions watching my content",       emoji: '📱', score: { media: 3 } },
+      { text: "Designing a famous building",        emoji: '🏛️', score: { architecture: 3 } },
+      { text: "Running my own business",            emoji: '💰', score: { business: 3 } },
+      { text: "Working at beautiful hotels",        emoji: '🌴', score: { tourism: 3 } },
+      { text: "Creating an amazing app",            emoji: '📲', score: { ict: 3 } },
     ],
   },
 ];
 
 const FACULTY_META = {
-  design:       { emoji: '🎨', color: '#f97316', bg: '#fff7ed', label: 'Design Innovation' },
-  media:        { emoji: '🎬', color: '#8b5cf6', bg: '#f5f3ff', label: 'Media & Broadcasting' },
-  architecture: { emoji: '🏛️', color: '#0ea5e9', bg: '#f0f9ff', label: 'Architecture' },
-  business:     { emoji: '💼', color: '#10b981', bg: '#f0fdf4', label: 'Business & Globalization' },
-  tourism:      { emoji: '✈️', color: '#f59e0b', bg: '#fffbeb', label: 'Tourism & Hospitality' },
-  ict:          { emoji: '💻', color: '#6366f1', bg: '#eef2ff', label: 'ICT' },
+  design:       { emoji: '🎨', color: P.pink600, label: 'Design & Art',     fun: 'You are super creative!' },
+  media:        { emoji: '🎬', color: P.pink700, label: 'Media & TV',       fun: 'You love telling stories!' },
+  architecture: { emoji: '🏛️', color: P.pink500, label: 'Architecture',     fun: 'You love building things!' },
+  business:     { emoji: '💼', color: P.pink600, label: 'Business',         fun: 'You are a born leader!' },
+  tourism:      { emoji: '✈️', color: P.pink700, label: 'Tourism & Hotels', fun: 'You love making people happy!' },
+  ict:          { emoji: '💻', color: P.pink500, label: 'Computers & Tech', fun: 'You are a tech star!' },
 };
 
-export default function Quizzes({ navigation }) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const isDark = colorScheme === 'dark';
+const INFO_CARDS = [
+  { emoji: '❓', value: '6',     label: 'Questions' },
+  { emoji: '🏫', value: '6',     label: 'Faculties' },
+  { emoji: '⏱️', value: '2 min', label: 'Duration'  },
+  { emoji: '🎯', value: 'Free',  label: 'No Sign Up' },
+];
 
-  const [screen, setScreen] = useState('welcome');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [scores, setScores] = useState({
+// ── MAIN COMPONENT ───────────────────────────────────────────
+export default function Quizzes() {
+  const [screen, setScreen]     = useState('welcome');
+  const [currentQ, setCurrentQ] = useState(0);
+  const [answers, setAnswers]   = useState({});   // { qIndex: optionIndex }
+  const [scores, setScores]     = useState({
     design: 0, media: 0, architecture: 0, business: 0, tourism: 0, ict: 0,
   });
 
-  const bg       = isDark ? '#0f172a' : '#f8fafc';
-  const card     = isDark ? '#1e293b' : '#ffffff';
-  const textMain = isDark ? '#f1f5f9' : '#0f172a';
-  const textSub  = isDark ? '#94a3b8' : '#64748b';
-  const border   = isDark ? '#334155' : '#e2e8f0';
+  const flatRef   = useRef(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const handleAnswer = (optionScores, index) => {
-    if (selected !== null) return;
-    setSelected(index);
-    const newScores = { ...scores };
-    Object.keys(optionScores).forEach(k => {
-      newScores[k] = (newScores[k] || 0) + (optionScores[k] || 0);
-    });
+  // ── Answer a question & auto-advance ────────────────────────
+  const handleAnswer = (qIndex, optionIndex, optionScores) => {
+    if (answers[qIndex] !== undefined) return;
+
+    // Bounce animation
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1,    duration: 120, useNativeDriver: true }),
+    ]).start();
+
+    setAnswers(prev => ({ ...prev, [qIndex]: optionIndex }));
+
+    const next = { ...scores };
+    Object.keys(optionScores).forEach(k => { next[k] = (next[k] || 0) + optionScores[k]; });
+    setScores(next);
+
     setTimeout(() => {
-      setScores(newScores);
-      setSelected(null);
-      if (currentQuestion < questions.length - 1) {
-        setCurrentQuestion(q => q + 1);
+      if (qIndex < questions.length - 1) {
+        const nextIndex = qIndex + 1;
+        setCurrentQ(nextIndex);
+        flatRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       } else {
         setScreen('results');
       }
-    }, 280);
+    }, 380);
   };
 
   const restart = () => {
     setScreen('welcome');
-    setCurrentQuestion(0);
-    setSelected(null);
+    setCurrentQ(0);
+    setAnswers({});
     setScores({ design: 0, media: 0, architecture: 0, business: 0, tourism: 0, ict: 0 });
   };
 
@@ -151,255 +165,419 @@ export default function Quizzes({ navigation }) {
     let max = -Infinity, topKey = 'design';
     Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; topKey = k; } });
     const facultyMap = {
-      design: "Faculty of Design Innovation",
-      media: "Faculty of Communication, Media & Broadcasting",
+      design:       "Faculty of Design Innovation",
+      media:        "Faculty of Communication, Media & Broadcasting",
       architecture: "Faculty of Architecture & the Built Environment",
-      business: "Faculty of Business & Globalization",
-      tourism: "Faculty of Creativity in Tourism & Hospitality",
-      ict: "Faculty of Information & Communication Technology",
+      business:     "Faculty of Business & Globalization",
+      tourism:      "Faculty of Creativity in Tourism & Hospitality",
+      ict:          "Faculty of Information & Communication Technology",
     };
     const desc = {
-      design: "You have strong creative and visual talents! Fields like Graphic Design, Fashion & Apparel Design or Creative Advertising could be an excellent match.",
-      media: "You enjoy communication, storytelling and media. Broadcasting & Journalism, Television & Film Production or Public Relations might suit you very well.",
-      architecture: "You seem drawn to structure, planning and technical creativity. Architectural Technology would likely be a great fit.",
-      business: "You have a strategic, people-oriented entrepreneurial mindset. International Business, Entrepreneurship or Marketing could be ideal.",
-      tourism: "You thrive on creating experiences and working with people. Tourism Management, Hotel Management or Events Management looks very promising.",
-      ict: "You're tech-savvy and love digital innovation. Software Engineering, Business IT or Information Technology aligns well with your interests.",
+      design:       "You are very creative! You would love Graphic Design, Fashion or Advertising.",
+      media:        "You love stories! Broadcasting, Journalism or Film Production is perfect for you.",
+      architecture: "You love building! Architectural Technology would be a great fit.",
+      business:     "You are a great leader! Business, Entrepreneurship or Marketing suits you.",
+      tourism:      "You make people happy! Tourism, Hotel or Events Management is made for you.",
+      ict:          "You are a tech star! Software Engineering or IT is the right path for you.",
     };
     return { key: topKey, faculty: facultyMap[topKey], description: desc[topKey] };
   };
 
-  const progressPct = ((currentQuestion + 1) / questions.length) * 100;
-
-  //WELCOME
+  // ════════════════════════════════════════════════════════════
+  // WELCOME — Card-based layout
+  // ════════════════════════════════════════════════════════════
   if (screen === 'welcome') {
     return (
-      <ScrollView style={[styles.root, { backgroundColor: bg }]}
-        contentContainerStyle={styles.centerPad}>
-
-        {/* Top pill */}
-        <View style={[styles.pill, { backgroundColor: isDark ? '#1e3a5f' : '#dbeafe' }]}>
-          <Text style={[styles.pillText, { color: isDark ? '#93c5fd' : '#1d4ed8' }]}>
-            🎓  Limkokwing University · Career Match
+      <ScrollView
+        style={{ flex: 1, backgroundColor: P.bg }}
+        contentContainerStyle={s.pad}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero card */}
+        <View style={s.heroCard}>
+          <Text style={s.heroEmoji}>🎓</Text>
+          <Text style={s.heroTitle}>
+            Find Your{'\n'}<Text style={s.accent}>Perfect Faculty</Text>
           </Text>
+          <Text style={s.heroSub}>
+            Answer 6 fun questions and discover which Limkokwing faculty was made for YOU!
+          </Text>
+          <TouchableOpacity style={s.heroBtn} onPress={() => setScreen('quiz')} activeOpacity={0.85}>
+            <Text style={s.heroBtnTxt}>Take a Quiz 🚀</Text>
+          </TouchableOpacity>
         </View>
 
-        {/*Headline*/}
-        <Text style={[styles.welcomeTitle, { color: textMain }]}>
-          Find Your{'\n'}<Text style={styles.accent}>Perfect</Text>{'\n'}Faculty
-        </Text>
-
-        <Text style={[styles.welcomeSub, { color: textSub }]}>
-          Answer 8 quick questions and discover which Limkokwing programme was made for you.
-        </Text>
-
-        {/*Quick stats*/}
-        <View style={[styles.statsRow, { backgroundColor: card, borderColor: border }]}>
-          {[['8', 'Questions'], ['6', 'Faculties'], ['2 min', 'Duration']].map(([val, lbl], i) => (
-            <View key={i} style={[styles.statCell, i < 2 && { borderRightWidth: 1, borderRightColor: border }]}>
-              <Text style={styles.statVal}>{val}</Text>
-              <Text style={[styles.statLbl, { color: textSub }]}>{lbl}</Text>
+        {/* 2×2 info grid */}
+        <View style={s.infoGrid}>
+          {INFO_CARDS.map((c, i) => (
+            <View key={i} style={s.infoCard}>
+              <Text style={s.infoEmoji}>{c.emoji}</Text>
+              <Text style={s.infoVal}>{c.value}</Text>
+              <Text style={s.infoLbl}>{c.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* Faculty chips */}
-        <Text style={[styles.sectionLbl, { color: textSub }]}>AVAILABLE FACULTIES</Text>
-        <View style={styles.chipsWrap}>
+        {/* Faculty preview grid */}
+        <Text style={s.secTitle}>You could become...</Text>
+        <View style={s.facultyGrid}>
           {Object.entries(FACULTY_META).map(([k, m]) => (
-            <View key={k} style={[styles.chip,
-              { backgroundColor: isDark ? '#1e293b' : m.bg, borderColor: m.color + '50' }]}>
-              <Text style={styles.chipEmoji}>{m.emoji}</Text>
-              <Text style={[styles.chipText, { color: m.color }]}>{m.label}</Text>
+            <View key={k} style={s.facultyCard}>
+              <Text style={s.facultyCardEmoji}>{m.emoji}</Text>
+              <Text style={s.facultyCardLabel}>{m.label}</Text>
+              <Text style={s.facultyCardFun}>{m.fun}</Text>
             </View>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.startBtn} onPress={() => setScreen('quiz')} activeOpacity={0.85}>
-          <Text style={styles.startBtnText}>Start the Quiz  →</Text>
-        </TouchableOpacity>
-
-        <Text style={[styles.note, { color: textSub }]}>Free · No sign-up · Instant results</Text>
+        <Text style={s.footNote}>Free · No sign up · Instant results 😊</Text>
       </ScrollView>
     );
   }
 
-  //QUIZ
+  // ════════════════════════════════════════════════════════════
+  // QUIZ — Horizontal swipe
+  // ════════════════════════════════════════════════════════════
   if (screen === 'quiz') {
-    const q = questions[currentQuestion];
+    const pct = ((currentQ + 1) / questions.length) * 100;
+
     return (
-      <ScrollView style={[styles.root, { backgroundColor: bg }]}
-        contentContainerStyle={styles.quizPad}>
+      <View style={{ flex: 1, backgroundColor: P.bg }}>
 
-        {/*Progress*/}
-        <View style={styles.topRow}>
-          <Text style={[styles.qCount, { color: textSub }]}>
-            {currentQuestion + 1} / {questions.length}
+        {/* ── Fixed top bar ── */}
+        <View style={s.quizTopBar}>
+          {/* Dot stepper */}
+          <View style={s.dotsRow}>
+            {questions.map((_, i) => (
+              <View key={i} style={[
+                s.dot,
+                i < currentQ   && s.dotDone,
+                i === currentQ && s.dotCurrent,
+                i > currentQ   && s.dotFuture,
+              ]} />
+            ))}
+          </View>
+
+          {/* Progress bar */}
+          <View style={s.progTrack}>
+            <View style={[s.progFill, { width: `${pct}%` }]} />
+          </View>
+
+          {/* Counter */}
+          <Text style={s.qCounter}>
+            {currentQ + 1} <Text style={{ color: P.muted }}>/ {questions.length}</Text>
           </Text>
-          <View style={[styles.progTrack, { backgroundColor: border }]}>
-            <View style={[styles.progFill, { width: `${progressPct}%` }]} />
-          </View>
         </View>
 
-        {/* Question card */}
-        <View style={[styles.qCard, { backgroundColor: card, borderColor: border }]}>
-          <View style={styles.qBadge}>
-            <Text style={styles.qBadgeText}>Q{currentQuestion + 1}</Text>
-          </View>
-          <Text style={[styles.qText, { color: textMain }]}>{q.text}</Text>
-        </View>
-
-        {/* Options */}
-        <View style={styles.optionsWrap}>
-          {q.options.map((opt, i) => {
-            const isSelected = selected === i;
-            return (
-              <TouchableOpacity
-                key={i}
-                style={[styles.optBtn,
-                  { backgroundColor: isSelected ? '#3b82f6' : card, borderColor: isSelected ? '#3b82f6' : border }
-                ]}
-                onPress={() => handleAnswer(opt.score, i)}
-                activeOpacity={0.75}
-              >
-                <View style={[styles.optLetter,
-                  { backgroundColor: isSelected ? '#ffffff20' : (isDark ? '#0f172a' : '#f1f5f9'),
-                    borderColor: isSelected ? '#ffffff40' : border }]}>
-                  <Text style={[styles.optLetterText,
-                    { color: isSelected ? '#fff' : textSub }]}>
-                    {String.fromCharCode(65 + i)}
-                  </Text>
-                </View>
-                <Text style={[styles.optText, { color: isSelected ? '#ffffff' : textMain }]}>
-                  {opt.text}
-                </Text>
-              </TouchableOpacity>
-            );
+        {/* ── Horizontal FlatList ── */}
+        <FlatList
+          ref={flatRef}
+          data={questions}
+          keyExtractor={item => String(item.id)}
+          horizontal
+          pagingEnabled
+          scrollEnabled={false}          // navigation only via answer tap
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={questions.length}
+          getItemLayout={(_, index) => ({
+            length: SW, offset: SW * index, index,
           })}
-        </View>
+          renderItem={({ item, index }) => (
+            <ScrollView
+              style={{ width: SW }}
+              contentContainerStyle={s.slidePad}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Question card */}
+              <Animated.View style={[s.qCard, { transform: [{ scale: scaleAnim }] }]}>
+                <View style={s.qCardHeader}>
+                  <View style={s.qBadge}>
+                    <Text style={s.qBadgeTxt}>Question {index + 1}</Text>
+                  </View>
+                  <Text style={s.qEmoji}>{item.emoji}</Text>
+                </View>
+                <Text style={s.qText}>{item.text}</Text>
+              </Animated.View>
 
-        {/* Step dots */}
-        <View style={styles.dotsRow}>
-          {questions.map((_, i) => (
-            <View key={i} style={[styles.dot, {
-              backgroundColor: i <= currentQuestion ? '#3b82f6' : border,
-              width: i === currentQuestion ? 20 : 8,
-              opacity: i === currentQuestion ? 1 : i < currentQuestion ? 0.7 : 0.3,
-            }]} />
-          ))}
-        </View>
+              {/* Options */}
+              <View style={s.optionsWrap}>
+                {item.options.map((opt, i) => {
+                  const answered  = answers[index] !== undefined;
+                  const isChosen  = answers[index] === i;
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={[
+                        s.optBtn,
+                        isChosen  && s.optBtnChosen,
+                        answered && !isChosen && s.optBtnFaded,
+                      ]}
+                      onPress={() => handleAnswer(index, i, opt.score)}
+                      activeOpacity={0.78}
+                      disabled={answered}
+                    >
+                      {/* Emoji bubble */}
+                      <View style={[s.optBubble, isChosen && s.optBubbleChosen]}>
+                        <Text style={s.optEmoji}>{opt.emoji}</Text>
+                      </View>
 
-      </ScrollView>
+                      <Text style={[s.optTxt, isChosen && s.optTxtChosen]}>
+                        {opt.text}
+                      </Text>
+
+                      {/* Check indicator */}
+                      {isChosen && (
+                        <View style={s.checkWrap}>
+                          <Text style={s.checkTxt}>✓</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
+        />
+      </View>
     );
   }
 
-  //RESULTS
+  // ════════════════════════════════════════════════════════════
+  // RESULTS — Simple clean card
+  // ════════════════════════════════════════════════════════════
   const result = getResult();
-  const meta = FACULTY_META[result.key];
+  const meta   = FACULTY_META[result.key];
 
   return (
-    <ScrollView style={[styles.root, { backgroundColor: bg }]}
-      contentContainerStyle={styles.centerPad}>
-
-      {/* Emoji circle */}
-      <View style={[styles.emojiCircle, { backgroundColor: meta.color + '20' }]}>
-        <Text style={styles.emojiLarge}>{meta.emoji}</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: P.bg }}
+      contentContainerStyle={s.pad}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Celebration header */}
+      <View style={s.celebRow}>
+        <Text style={s.celebEmoji}>🎉</Text>
+        <Text style={s.celebTxt}>Quiz Complete!</Text>
+        <Text style={s.celebEmoji}>🎊</Text>
       </View>
 
-      <Text style={[styles.matchLbl, { color: textSub }]}>YOUR BEST MATCH</Text>
-      <Text style={[styles.facultyName, { color: meta.color }]}>{result.faculty}</Text>
+      {/* ── Main result card ── */}
+      <View style={s.resultCard}>
+        {/* Top pink banner */}
+        <View style={s.resultBanner}>
+          <Text style={s.resultBannerEmoji}>{meta.emoji}</Text>
+          <View style={s.bestMatchPill}>
+            <Text style={s.bestMatchTxt}>✨ Best Match</Text>
+          </View>
+        </View>
 
-      <View style={[styles.descCard, { backgroundColor: card, borderColor: meta.color + '40', borderLeftColor: meta.color }]}>
-        <Text style={[styles.descText, { color: textMain }]}>{result.description}</Text>
+        {/* Body */}
+        <View style={s.resultBody}>
+          <Text style={s.resultLabel}>{meta.label}</Text>
+          <Text style={s.resultFun}>{meta.fun}</Text>
+
+          {/* Divider */}
+          <View style={s.divider} />
+
+          <Text style={s.resultFacultyTitle}>Faculty</Text>
+          <Text style={s.resultFaculty}>{result.faculty}</Text>
+
+          {/* Divider */}
+          <View style={s.divider} />
+
+          {/* Description */}
+          <View style={s.resultDescRow}>
+            <Text style={s.resultDescIcon}>💡</Text>
+            <Text style={s.resultDesc}>{result.description}</Text>
+          </View>
+        </View>
       </View>
 
-      {/*Score breakdown */}
-      <Text style={[styles.sectionLbl, { color: textSub, marginTop: 24 }]}>SCORE BREAKDOWN</Text>
-      <View style={[styles.scoreCard, { backgroundColor: card, borderColor: border }]}>
+      {/* ── Score pills ── */}
+      <Text style={s.secTitle}>How you scored</Text>
+      <View style={s.pillsWrap}>
         {Object.entries(scores)
           .sort(([, a], [, b]) => b - a)
-          .map(([key, score]) => {
-            const m = FACULTY_META[key];
-            const pct = Math.min((score / 24) * 100, 100);
+          .map(([key, score], idx) => {
+            const m     = FACULTY_META[key];
+            const isTop = idx === 0;
             return (
-              <View key={key} style={styles.scoreRow}>
-                <Text style={styles.scoreEmoji}>{m.emoji}</Text>
-                <View style={styles.scoreBarWrap}>
-                  <Text style={[styles.scoreLabel, { color: textMain }]}>{m.label}</Text>
-                  <View style={[styles.scoreTrack, { backgroundColor: border }]}>
-                    <View style={[styles.scoreBar, { width: `${pct}%`, backgroundColor: m.color }]} />
-                  </View>
+              <View key={key} style={[s.scorePill, isTop && s.scorePillTop]}>
+                <Text style={s.scorePillEmoji}>{m.emoji}</Text>
+                <Text style={[s.scorePillLabel, isTop && { color: P.pink700 }]}>
+                  {m.label}
+                </Text>
+                <View style={[s.scorePillBadge, isTop && s.scorePillBadgeTop]}>
+                  <Text style={[s.scorePillNum, isTop && { color: '#fff' }]}>
+                    {score}
+                  </Text>
                 </View>
-                <Text style={[styles.scoreNum, { color: m.color }]}>{score}</Text>
               </View>
             );
           })}
       </View>
 
-      <TouchableOpacity style={[styles.retakeBtn, { borderColor: border }]} onPress={restart} activeOpacity={0.8}>
-        <Text style={[styles.retakeBtnText, { color: textSub }]}>↺  Take the Quiz Again</Text>
+      {/* Retake */}
+      <TouchableOpacity style={s.retakeBtn} onPress={restart} activeOpacity={0.85}>
+        <Text style={s.retakeTxt}>🔄  Take a Quiz Again</Text>
       </TouchableOpacity>
 
+      <Text style={s.footNote}>Show this to your parents or teacher! 😊</Text>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  centerPad: { alignItems: 'center', padding: 24, paddingBottom: 60, paddingTop: 40 },
-  quizPad: { padding: 24, paddingBottom: 60, paddingTop: 40 },
+// ── STYLES ───────────────────────────────────────────────────
+const s = StyleSheet.create({
+  pad: { padding: rs(18), paddingBottom: rvs(80), paddingTop: rvs(20) },
 
-  //Welcome
-  pill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginBottom: 28 },
-  pillText: { fontSize: 13, fontWeight: '700' },
-  welcomeTitle: { fontSize: 44, fontWeight: '900', textAlign: 'center', lineHeight: 52, marginBottom: 16 },
-  accent: { color: '#3b82f6' },
-  welcomeSub: { fontSize: 15, textAlign: 'center', lineHeight: 23, marginBottom: 28, paddingHorizontal: 8 },
-  statsRow: { flexDirection: 'row', width: '100%', borderRadius: 16, borderWidth: 1, marginBottom: 28, overflow: 'hidden' },
-  statCell: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  statVal: { fontSize: 22, fontWeight: '800', color: '#3b82f6' },
-  statLbl: { fontSize: 12, marginTop: 2, fontWeight: '500' },
-  sectionLbl: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 12, alignSelf: 'flex-start' },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32, width: '100%' },
-  chip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, gap: 6 },
-  chipEmoji: { fontSize: 14 },
-  chipText: { fontSize: 12, fontWeight: '600' },
-  startBtn: { width: '100%', backgroundColor: '#3b82f6', paddingVertical: 18, borderRadius: 16, alignItems: 'center', marginBottom: 14 },
-  startBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
-  note: { fontSize: 13 },
+  // ── Welcome ──────────────────────────────────────────────
+  heroCard: {
+    backgroundColor: P.pink600, borderRadius: rs(28),
+    padding: rs(28), alignItems: 'center', marginBottom: rvs(16),
+    shadowColor: P.pink700, shadowOffset: { width: 0, height: rvs(6) },
+    shadowOpacity: 0.32, shadowRadius: rs(16), elevation: 8,
+  },
+  heroEmoji:  { fontSize: rs(62), marginBottom: rvs(10) },
+  heroTitle:  { fontSize: rs(28), fontWeight: '900', color: '#fff', textAlign: 'center', lineHeight: rs(36), marginBottom: rvs(10) },
+  accent:     { color: P.pink200 },
+  heroSub:    { fontSize: rs(14), color: '#fce7f3', textAlign: 'center', lineHeight: rs(22), marginBottom: rvs(22) },
+  heroBtn:    { backgroundColor: '#fff', paddingVertical: rvs(14), paddingHorizontal: rs(44), borderRadius: rs(16), shadowColor: P.pink800, shadowOffset: { width: 0, height: rvs(3) }, shadowOpacity: 0.18, shadowRadius: rs(8), elevation: 4 },
+  heroBtnTxt: { fontSize: rs(17), fontWeight: '900', color: P.pink600 },
 
-  //Quiz
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
-  qCount: { fontSize: 13, fontWeight: '700', width: 44 },
-  progTrack: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
-  progFill: { height: 6, backgroundColor: '#3b82f6', borderRadius: 3 },
-  qCard: { borderRadius: 20, borderWidth: 1, padding: 20, marginBottom: 18 },
-  qBadge: { backgroundColor: '#3b82f6', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 12 },
-  qBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  qText: { fontSize: 19, fontWeight: '700', lineHeight: 27 },
-  optionsWrap: { gap: 10 },
-  optBtn: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 14, borderWidth: 1.5, gap: 12 },
-  optLetter: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  optLetterText: { fontSize: 13, fontWeight: '800' },
-  optText: { flex: 1, fontSize: 15, fontWeight: '500', lineHeight: 21 },
-  dotsRow: { flexDirection: 'row', gap: 6, marginTop: 24, alignItems: 'center', justifyContent: 'center' },
-  dot: { height: 8, borderRadius: 4 },
+  infoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: rs(10), marginBottom: rvs(18) },
+  infoCard: {
+    width: (SW - rs(18) * 2 - rs(10)) / 2,
+    backgroundColor: P.card, borderRadius: rs(20), padding: rs(16),
+    alignItems: 'center', gap: rvs(4),
+    borderWidth: 2, borderColor: P.pink200,
+    shadowColor: P.pink300, shadowOffset: { width: 0, height: rvs(2) },
+    shadowOpacity: 0.15, shadowRadius: rs(6), elevation: 3,
+  },
+  infoEmoji: { fontSize: rs(26) },
+  infoVal:   { fontSize: rs(22), fontWeight: '900', color: P.pink600 },
+  infoLbl:   { fontSize: rs(11), fontWeight: '600', color: P.muted },
 
-  //Results
-  emojiCircle: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 16, marginTop: 4 },
-  emojiLarge: { fontSize: 48 },
-  matchLbl: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 10 },
-  facultyName: { fontSize: 24, fontWeight: '900', textAlign: 'center', lineHeight: 32, marginBottom: 20 },
-  descCard: { width: '100%', borderRadius: 16, borderWidth: 1, borderLeftWidth: 4, padding: 18, marginBottom: 8 },
-  descText: { fontSize: 15, lineHeight: 23, fontWeight: '500' },
-  scoreCard: { width: '100%', borderRadius: 16, borderWidth: 1, padding: 16, gap: 14, marginBottom: 28 },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  scoreEmoji: { fontSize: 20, width: 28, textAlign: 'center' },
-  scoreBarWrap: { flex: 1 },
-  scoreLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
-  scoreTrack: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  scoreBar: { height: 6, borderRadius: 3 },
-  scoreNum: { fontSize: 14, fontWeight: '800', width: 24, textAlign: 'right' },
-  retakeBtn: { width: '100%', paddingVertical: 16, borderRadius: 16, alignItems: 'center', borderWidth: 1.5 },
-  retakeBtnText: { fontSize: 16, fontWeight: '700' },
+  secTitle:    { fontSize: rs(16), fontWeight: '800', color: P.pink700, marginBottom: rvs(12) },
+  facultyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: rs(10), marginBottom: rvs(18) },
+  facultyCard: {
+    width: (SW - rs(18) * 2 - rs(10)) / 2,
+    backgroundColor: P.card, borderRadius: rs(18), padding: rs(14),
+    alignItems: 'center', gap: rvs(4),
+    borderWidth: 2, borderColor: P.pink200,
+    shadowColor: P.pink200, shadowOffset: { width: 0, height: rvs(2) },
+    shadowOpacity: 0.12, shadowRadius: rs(6), elevation: 2,
+  },
+  facultyCardEmoji: { fontSize: rs(30) },
+  facultyCardLabel: { fontSize: rs(12), fontWeight: '800', color: P.pink800, textAlign: 'center' },
+  facultyCardFun:   { fontSize: rs(10), fontWeight: '600', color: P.muted,  textAlign: 'center' },
+  footNote:         { fontSize: rs(13), color: P.muted, textAlign: 'center', marginTop: rvs(4) },
+
+  // ── Quiz top bar ─────────────────────────────────────────
+  quizTopBar: {
+    backgroundColor: P.card,
+    paddingHorizontal: rs(18), paddingTop: rvs(14), paddingBottom: rvs(12),
+    borderBottomWidth: 1.5, borderBottomColor: P.pink200,
+    gap: rvs(8),
+  },
+  dotsRow:    { flexDirection: 'row', gap: rs(6), justifyContent: 'center' },
+  dot:        { height: rvs(6), borderRadius: rs(3) },
+  dotDone:    { width: rs(16), backgroundColor: P.pink400 },
+  dotCurrent: { width: rs(28), backgroundColor: P.pink600 },
+  dotFuture:  { width: rs(16), backgroundColor: P.pink200 },
+  progTrack:  { height: rvs(6), borderRadius: rs(3), backgroundColor: P.pink200, overflow: 'hidden' },
+  progFill:   { height: rvs(6), backgroundColor: P.pink500, borderRadius: rs(3) },
+  qCounter:   { fontSize: rs(13), fontWeight: '800', color: P.pink700, textAlign: 'center' },
+
+  // ── Quiz slide ───────────────────────────────────────────
+  slidePad: { padding: rs(18), paddingBottom: rvs(60) },
+
+  qCard: {
+    backgroundColor: P.card, borderRadius: rs(24),
+    padding: rs(22), marginBottom: rvs(16),
+    borderWidth: 2, borderColor: P.pink200,
+    shadowColor: P.pink400, shadowOffset: { width: 0, height: rvs(4) },
+    shadowOpacity: 0.18, shadowRadius: rs(14), elevation: 6,
+  },
+  qCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rvs(14) },
+  qBadge:      { backgroundColor: P.pink600, paddingHorizontal: rs(14), paddingVertical: rvs(5), borderRadius: rs(12) },
+  qBadgeTxt:   { color: '#fff', fontSize: rs(12), fontWeight: '800', letterSpacing: 0.3 },
+  qEmoji:      { fontSize: rs(38) },
+  qText:       { fontSize: rs(20), fontWeight: '900', lineHeight: rs(30), color: P.txt },
+
+  optionsWrap: { gap: rvs(10) },
+  optBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: P.card, borderRadius: rs(18),
+    padding: rs(14), gap: rs(12),
+    borderWidth: 2, borderColor: P.pink200,
+    shadowColor: P.pink300, shadowOffset: { width: 0, height: rvs(2) },
+    shadowOpacity: 0.12, shadowRadius: rs(8), elevation: 3,
+  },
+  optBtnChosen: { backgroundColor: P.pink600, borderColor: P.pink600 },
+  optBtnFaded:  { opacity: 0.4 },
+  optBubble:       { width: rs(44), height: rs(44), borderRadius: rs(14), backgroundColor: P.pink100, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: P.pink300 },
+  optBubbleChosen: { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: 'rgba(255,255,255,0.4)' },
+  optEmoji: { fontSize: rs(22) },
+  optTxt:   { flex: 1, fontSize: rs(15), fontWeight: '700', color: P.txt, lineHeight: rs(21) },
+  optTxtChosen: { color: '#fff' },
+  checkWrap: { width: rs(30), height: rs(30), borderRadius: rs(15), backgroundColor: 'rgba(255,255,255,0.28)', alignItems: 'center', justifyContent: 'center' },
+  checkTxt:  { fontSize: rs(15), color: '#fff', fontWeight: '900' },
+
+  // ── Results ──────────────────────────────────────────────
+  celebRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: rs(10), marginBottom: rvs(16) },
+  celebEmoji:{ fontSize: rs(28) },
+  celebTxt:  { fontSize: rs(22), fontWeight: '900', color: P.pink700 },
+
+  resultCard: {
+    backgroundColor: P.card, borderRadius: rs(28),
+    overflow: 'hidden', marginBottom: rvs(22),
+    borderWidth: 2, borderColor: P.pink200,
+    shadowColor: P.pink500, shadowOffset: { width: 0, height: rvs(6) },
+    shadowOpacity: 0.2, shadowRadius: rs(16), elevation: 8,
+  },
+  resultBanner: {
+    backgroundColor: P.pink600, padding: rs(28),
+    alignItems: 'center', gap: rvs(10),
+  },
+  resultBannerEmoji: { fontSize: rs(64) },
+  bestMatchPill:     { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: rs(16), paddingVertical: rvs(5), borderRadius: rs(20) },
+  bestMatchTxt:      { color: '#fff', fontSize: rs(12), fontWeight: '800', letterSpacing: 0.5 },
+
+  resultBody:        { padding: rs(22) },
+  resultLabel:       { fontSize: rs(26), fontWeight: '900', color: P.pink800, marginBottom: rvs(4) },
+  resultFun:         { fontSize: rs(14), fontWeight: '700', color: P.muted, marginBottom: rvs(16) },
+  divider:           { height: 1.5, backgroundColor: P.pink100, marginBottom: rvs(16) },
+  resultFacultyTitle:{ fontSize: rs(11), fontWeight: '800', color: P.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: rvs(4) },
+  resultFaculty:     { fontSize: rs(15), fontWeight: '800', color: P.pink700, marginBottom: rvs(16), lineHeight: rs(22) },
+  resultDescRow:     { flexDirection: 'row', gap: rs(10), alignItems: 'flex-start' },
+  resultDescIcon:    { fontSize: rs(20) },
+  resultDesc:        { flex: 1, fontSize: rs(14), lineHeight: rs(22), color: P.sub, fontWeight: '600' },
+
+  // ── Score pills ──────────────────────────────────────────
+  pillsWrap: { gap: rvs(8), marginBottom: rvs(22) },
+  scorePill: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: P.card, borderRadius: rs(16),
+    padding: rs(14), gap: rs(12),
+    borderWidth: 1.5, borderColor: P.pink200,
+    shadowColor: P.pink200, shadowOffset: { width: 0, height: rvs(1) },
+    shadowOpacity: 0.1, shadowRadius: rs(4), elevation: 2,
+  },
+  scorePillTop:       { borderColor: P.pink400, borderWidth: 2, backgroundColor: P.pink100 },
+  scorePillEmoji:     { fontSize: rs(22) },
+  scorePillLabel:     { flex: 1, fontSize: rs(14), fontWeight: '700', color: P.sub },
+  scorePillBadge:     { backgroundColor: P.pink100, borderRadius: rs(10), paddingHorizontal: rs(10), paddingVertical: rvs(4) },
+  scorePillBadgeTop:  { backgroundColor: P.pink600 },
+  scorePillNum:       { fontSize: rs(14), fontWeight: '900', color: P.pink600 },
+
+  retakeBtn: {
+    backgroundColor: P.card, paddingVertical: rvs(16),
+    borderRadius: rs(18), alignItems: 'center',
+    borderWidth: 2, borderColor: P.pink300,
+    marginBottom: rvs(14),
+    shadowColor: P.pink300, shadowOffset: { width: 0, height: rvs(2) },
+    shadowOpacity: 0.1, shadowRadius: rs(6), elevation: 2,
+  },
+  retakeTxt: { fontSize: rs(16), fontWeight: '900', color: P.pink700 },
 });
